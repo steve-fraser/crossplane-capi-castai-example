@@ -1,0 +1,42 @@
+---
+apiVersion: castai.upbound.io/v1alpha1
+kind: EksUserArn
+metadata:
+  name: capi-eks-control-plane
+  labels:
+    cast-ai-cluster: capi-eks-control-plane
+spec:
+  forProvider:
+    clusterIdSelector:
+      matchLabels:
+        cast-ai-cluster: capi-eks-control-plane
+---
+apiVersion: castai.upbound.io/v1alpha1
+kind: EksCluster
+metadata:
+  name: capi-eks-control-plane
+  labels:
+    cast-ai-cluster: capi-eks-control-plane
+spec:
+  deletionPolicy: Orphan
+  forProvider:
+    accountId: "445567108000"
+    name: default_capi-eks-control-plane
+    assumeRoleArn: <>
+    deleteNodesOnDisconnect: false
+    region: us-west-1
+---
+apiVersion: castai.upbound.io/v1alpha1
+kind: NodeConfigurationDefault
+metadata:
+  name: default
+  labels:
+    cast-ai-cluster: capi-eks-control-plane
+spec:
+  forProvider:
+    clusterIdSelector:
+      matchLabels:
+        cast-ai-cluster: capi-eks-control-plane
+    configurationIdSelector:
+      matchLabels:
+        cast-ai-cluster: capi-eks-control-plane

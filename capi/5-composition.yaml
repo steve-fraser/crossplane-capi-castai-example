@@ -1,0 +1,190 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: eksclusters.test.com
+spec:
+  group: test.com
+  names:
+    kind: EKSCluster
+    plural: eksclusters
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              parameters:
+                type: object
+                properties:
+                  region:
+                    type: string
+                required:
+                - region
+            required:
+            - parameters
+          status:
+            type: object
+            properties:
+              subnetA:
+                description: Subnet ID A
+                type: string
+              subnetB:
+                description: Subnet ID B
+                type: string
+              clusterSG:
+                description: Subnet ID A
+                type: string
+              nodeSG:
+                description: Subnet ID B
+                type: string
+              castaiclusterid:
+                description: castai cluster id
+                type: string
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: eksclusters
+  labels:
+    crossplane.io/xrd: eksclusters.test.com
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: test.com/v1alpha1
+    kind: EKSCluster
+  resources:
+  - name: controlplane
+    base:
+      apiVersion: kubernetes.crossplane.io/v1alpha2
+      kind: Object
+      metadata:
+        name: test
+      spec:
+        forProvider:
+          manifest:
+            apiVersion: controlplane.cluster.x-k8s.io/v1beta2
+            kind: AWSManagedControlPlane
+            metadata:
+              name: capi-eks-control-plane
+              namespace: default
+            spec:
+              region: us-west-1
+              version: "1.30"
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: metadata.name
+      toFieldPath: metadata.name
+    - type: FromCompositeFieldPath
+      fromFieldPath: metadata.name
+      toFieldPath: spec.forProvider.manifest.metadata.name
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.region
+      toFieldPath: spec.forProvider.manifest.spec.region
+    - type: ToCompositeFieldPath
+      fromFieldPath: status.atProvider.manifest.spec.network.subnets[1].resourceID
+      toFieldPath: status.subnetA
+    - type: ToCompositeFieldPath
+      fromFieldPath:  status.atProvider.manifest.status.networkStatus.securityGroups.cluster.id
+      toFieldPath: status.clusterSG
+    - type: ToCompositeFieldPath
+      fromFieldPath:  status.atProvider.manifest.status.networkStatus.securityGroups.node.id
+      toFieldPath: status.nodeSG
+  - name: castai-namespace
+    base:
+      apiVersion: kubernetes.crossplane.io/v1alpha2
+      kind: Object
+      metadata:
+        name: castai-agent-ns
+      spec:
+        providerConfigRef:
+          name: capi-eks-control-plane
+        forProvider:
+          manifest:
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              creationTimestamp: null
+              name: castai-agent
+  - name: castai-cluster-id-obj
+    base:
+      apiVersion: castai.upbound.io/v1alpha1
+      kind: EksClusterId
+      metadata:
+        name: capi-eks-control-plane 
+        labels:
+          cast-ai-cluster: capi-eks-control-plane
+      spec:
+        forProvider:
+          accountId: "445567108000"
+          clusterName: default_capi-eks-control-plane
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.region
+      toFieldPath: spec.forProvider.region
+    - type: ToCompositeFieldPath
+      fromFieldPath:  status.atProvider.id
+      toFieldPath: status.castaiclusterid
+  - name: castai-cluster-id
+    base:
+      apiVersion: kubernetes.crossplane.io/v1alpha2
+      kind: Object
+      metadata:
+        name: cluster-id
+      spec:
+        providerConfigRef:
+          name: capi-eks-control-plane
+        forProvider:
+          manifest:
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: castai-clusterid
+              namespace: castai-agent
+            stringData:
+              CLUSTER_ID: replace
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: status.castaiclusterid
+      toFieldPath: spec.forProvider.manifest.stringData.CLUSTER_ID
+
+  - name: node-templates
+    base:
+      apiVersion: castai.upbound.io/v1alpha1
+      kind: NodeConfiguration
+      metadata:
+        name: default
+        labels:
+          cast-ai-cluster: capi-eks-control-plane
+      spec:
+        forProvider:
+          clusterIdSelector:
+            matchLabels:
+              cast-ai-cluster: capi-eks-control-plane
+          name: default
+          diskCpuRatio: 0
+          minDiskSize: 150
+          subnets: []
+          eks:
+            - securityGroups: []
+              instanceProfileArn: arn:aws:iam::445567108000:instance-profile/eks-20ca5f27-1c83-8d17-150e-72e549d17475
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: status.subnetA
+      toFieldPath: spec.forProvider.subnets[0]
+    - type: FromCompositeFieldPath
+      fromFieldPath: status.subnetB
+      toFieldPath: spec.forProvider.subnets[1]
+    - type: FromCompositeFieldPath
+      fromFieldPath: status.clusterSG
+      toFieldPath: spec.forProvider.eks[0].securityGroups[0]
+    - type: FromCompositeFieldPath
+      fromFieldPath: status.nodeSG
+      toFieldPath: spec.forProvider.eks[0].securityGroups[1]
+
+
+

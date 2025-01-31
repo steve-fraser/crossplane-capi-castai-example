@@ -1,0 +1,78 @@
+---
+apiVersion: castai.upbound.io/v1alpha1
+kind: EksClusterId
+metadata:
+  name: ridiculous-mushroom-1738258454 
+  labels:
+    cast-ai-cluster: ridiculous-mushroom-1738258454
+spec:
+  forProvider:
+    accountId: "445567108000"
+    clusterName: ridiculous-mushroom-1738258454
+    region: us-west-2
+---
+apiVersion: castai.upbound.io/v1alpha1
+kind: EksUserArn
+metadata:
+  name: ridiculous-mushroom-1738258454
+  labels:
+    cast-ai-cluster: ridiculous-mushroom-1738258454
+spec:
+  forProvider:
+    clusterIdRef:
+      name: ridiculous-mushroom-1738258454
+---
+apiVersion: castai.upbound.io/v1alpha1
+kind: EksCluster
+metadata:
+  name: ridiculous-mushroom-1738258454
+  labels:
+    cast-ai-cluster: ridiculous-mushroom-1738258454
+spec:
+  deletionPolicy: Orphan
+  forProvider:
+    accountId: "445567108000"
+    name: ridiculous-mushroom-1738258454
+    assumeRoleArn: arn:aws:iam::445567108000:role/steve-crossplane-test
+    deleteNodesOnDisconnect: false
+    region: us-west-2
+  writeConnectionSecretToRef:
+    namespace: castai-agent
+    name: castai-clusterid
+---
+apiVersion: castai.upbound.io/v1alpha1
+kind: NodeConfigurationDefault
+metadata:
+  name: default
+  labels:
+    cast-ai-cluster: ridiculous-mushroom-1738258454
+spec:
+  forProvider:
+    clusterIdSelector:
+      matchLabels:
+        cast-ai-cluster: ridiculous-mushroom-1738258454
+    configurationIdSelector:
+      matchLabels:
+        cast-ai-cluster: ridiculous-mushroom-1738258454
+---
+apiVersion: castai.upbound.io/v1alpha1
+kind: NodeConfiguration
+metadata:
+  name: default
+  labels:
+    cast-ai-cluster: ridiculous-mushroom-1738258454
+spec:
+  forProvider:
+    clusterIdSelector:
+      matchLabels:
+        cast-ai-cluster: ridiculous-mushroom-1738258454
+    name: default
+    diskCpuRatio: 0
+    minDiskSize: 150
+    subnets:
+      - subnet-0fc0949bda6e0e70b
+    eks:
+      - securityGroups:
+          - sg-080e12182ad033f2f
+          - sg-006bb8f93b5e4ea37
+        instanceProfileArn: arn:aws:iam::445567108000:instance-profile/eks-7cca5c28-631e-ac0f-cd8c-fe3379cd34aa
