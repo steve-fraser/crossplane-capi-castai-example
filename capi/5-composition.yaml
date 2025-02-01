@@ -37,13 +37,13 @@ spec:
                 description: Subnet ID B
                 type: string
               clusterSG:
-                description: Subnet ID A
+                description: Cluster Security Group ID
                 type: string
               nodeSG:
-                description: Subnet ID B
+                description: Node Security Group ID
                 type: string
               castaiclusterid:
-                description: castai cluster id
+                description: CAST AI Cluster ID
                 type: string
 ---
 apiVersion: apiextensions.crossplane.io/v1
@@ -63,7 +63,7 @@ spec:
       apiVersion: kubernetes.crossplane.io/v1alpha2
       kind: Object
       metadata:
-        name: test
+        name: eks-control-plane
       spec:
         forProvider:
           manifest:
@@ -75,6 +75,7 @@ spec:
             spec:
               region: us-west-1
               version: "1.30"
+              eksClusterName: ""
     patches:
     - type: FromCompositeFieldPath
       fromFieldPath: metadata.name
@@ -82,6 +83,9 @@ spec:
     - type: FromCompositeFieldPath
       fromFieldPath: metadata.name
       toFieldPath: spec.forProvider.manifest.metadata.name
+    - type: FromCompositeFieldPath
+      fromFieldPath: metadata.name
+      toFieldPath: spec.forProvider.manifest.spec.eksClusterName
     - type: FromCompositeFieldPath
       fromFieldPath: spec.parameters.region
       toFieldPath: spec.forProvider.manifest.spec.region
@@ -94,6 +98,7 @@ spec:
     - type: ToCompositeFieldPath
       fromFieldPath:  status.atProvider.manifest.status.networkStatus.securityGroups.node.id
       toFieldPath: status.nodeSG
+
   - name: castai-namespace
     base:
       apiVersion: kubernetes.crossplane.io/v1alpha2
@@ -110,6 +115,7 @@ spec:
             metadata:
               creationTimestamp: null
               name: castai-agent
+
   - name: castai-cluster-id-obj
     base:
       apiVersion: castai.upbound.io/v1alpha1
@@ -126,6 +132,9 @@ spec:
     - type: FromCompositeFieldPath
       fromFieldPath: spec.parameters.region
       toFieldPath: spec.forProvider.region
+    - type: FromCompositeFieldPath
+      fromFieldPath: metadata.name
+      toFieldPath: spec.forProvider.clusterName
     - type: ToCompositeFieldPath
       fromFieldPath:  status.atProvider.id
       toFieldPath: status.castaiclusterid
