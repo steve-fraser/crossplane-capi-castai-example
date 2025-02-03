@@ -115,6 +115,10 @@ spec:
             metadata:
               creationTimestamp: null
               name: castai-agent
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: metadata.name
+      toFieldPath: spec.providerConfigRef.name
 
   - name: castai-cluster-id-obj
     base:
@@ -157,6 +161,9 @@ spec:
             stringData:
               CLUSTER_ID: replace
     patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: metadata.name
+      toFieldPath: spec.providerConfigRef.name
     - type: FromCompositeFieldPath
       fromFieldPath: status.castaiclusterid
       toFieldPath: spec.forProvider.manifest.stringData.CLUSTER_ID
