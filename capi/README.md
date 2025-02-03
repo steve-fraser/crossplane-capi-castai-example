@@ -9,3 +9,4 @@ bash  1-install-crossplane.sh
 [Getting Started with Cluster API for AWS](https://cluster-api-aws.sigs.k8s.io/getting-started)
 
 
+## Install the CAST AI Crossplane porvider
