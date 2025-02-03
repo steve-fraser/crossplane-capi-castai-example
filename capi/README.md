@@ -54,3 +54,21 @@ spec:
       key: credentials
 EOF
 ```
+
+## Install the Kubernetes Provider 
+
+This provider is used in the crossplane composition and will go into further details in the next section
+
+```
+kubectl apply -f 2-k8s-provider.yaml
+```
+
+## Install the composition
+
+Install the composition
+
+```
+kubectl apply -f 3-composition.yaml
+```
+
+[File: 3-composition.yaml#L33-L47](file:///3-composition.yaml#L10-L20)
